@@ -3,6 +3,10 @@
 # added or removed, opens or updates a single PR on the sync/blocklist branch,
 # carrying a patch changeset. When nothing changed it opens nothing, and it
 # closes a sync PR that no longer differs from main.
+#
+# Two jobs, so third-party code never shares a runner with a write token:
+# `check` installs dependencies and runs the sync and the CI gates with a
+# read-only token; `pull-request` only runs git and gh on check's output.
 name: Sync blocklist
 
 on:
@@ -16,17 +20,18 @@ concurrency:
   group: sync-blocklist
   cancel-in-progress: false
 
+env:
+  BRANCH: sync/blocklist
+
 jobs:
-  sync:
+  check:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push the sync branch
-      pull-requests: write # open, update or close the sync PR
-    env:
-      BRANCH: sync/blocklist
+      contents: read
+    outputs:
+      changed: ${{ steps.sync.outputs.changed }}
+      title: ${{ steps.sync.outputs.title }}
     steps:
-      # Like the release jobs: no stored credentials and no dependency cache
-      # while third-party code runs in a job that can push.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -35,7 +40,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts
 
       - id: sync
         run: pnpm sync-blocklist "$RUNNER_TEMP/pr-body.md"
@@ -52,12 +57,45 @@ jobs:
           pnpm check:package
           pnpm size
 
-      - name: Open or update the sync PR
+      - name: Collect the sync output
         if: steps.sync.outputs.changed == 'true'
+        run: |
+          mkdir "$RUNNER_TEMP/sync"
+          cp src/generated/blocklist.ts .changeset/sync-blocklist-*.md "$RUNNER_TEMP/pr-body.md" "$RUNNER_TEMP/sync/"
+      - if: steps.sync.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sync
+          path: ${{ runner.temp }}/sync
+          retention-days: 1
+
+  pull-request:
+    needs: check
+    if: needs.check.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the sync branch
+      pull-requests: write # open or update the sync PR
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sync
+          path: ${{ runner.temp }}/sync
+      - name: Open or update the sync PR
         env:
           GH_TOKEN: ${{ github.token }}
-          TITLE: ${{ steps.sync.outputs.title }}
+          TITLE: ${{ needs.check.outputs.title }}
         run: |
+          set -- "$RUNNER_TEMP"/sync/sync-blocklist-*.md
+          if [ "$#" -ne 1 ] || ! [[ "$(basename "$1")" =~ ^sync-blocklist-[0-9a-f]{7}\.md$ ]]; then
+            echo "Expected exactly one sync changeset" >&2
+            exit 1
+          fi
+          cp "$RUNNER_TEMP/sync/blocklist.ts" src/generated/blocklist.ts
+          cp "$1" .changeset/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch --create "$BRANCH"
@@ -66,15 +104,23 @@ jobs:
           git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
           pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
           if [ -n "$pr" ]; then
-            gh pr edit "$pr" --title "$TITLE" --body-file "$RUNNER_TEMP/pr-body.md"
+            gh pr edit "$pr" --title "$TITLE" --body-file "$RUNNER_TEMP/sync/pr-body.md"
           else
-            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$RUNNER_TEMP/pr-body.md"
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$RUNNER_TEMP/sync/pr-body.md"
           fi
 
+  close-stale:
+    needs: check
+    if: needs.check.outputs.changed == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # delete the sync branch
+      pull-requests: write # close the sync PR
+    steps:
       - name: Close a sync PR that no longer changes anything
-        if: steps.sync.outputs.changed == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
           if [ -n "$pr" ]; then
