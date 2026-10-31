@@ -173,7 +173,7 @@ The core is about 58 KB minified and gzipped, nearly all of it the built-in bloc
 
 ## Where the list comes from
 
-The built-in blocklist is a snapshot of the community-maintained [disposable-email-domains](https://github.com/disposable-email-domains/disposable-email-domains) list, dedicated to the public domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Thanks to its maintainers. Each release embeds the list at a fixed upstream commit, recorded at the top of the generated file. Nothing is downloaded at runtime.
+The built-in blocklist is a snapshot of the community-maintained [disposable-email-domains](https://github.com/disposable-email-domains/disposable-email-domains) list, dedicated to the public domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Thanks to its maintainers. Each release embeds the list at a fixed upstream commit, recorded at the top of the generated file. Nothing is downloaded at runtime. A weekly job compares the list with upstream and, when domains were added or removed, opens a pull request that releases a patch version once merged.
 
 The upstream maintainers don't guarantee that every listed domain is still disposable. If one causes a false positive for you, add it to your custom allowlist (`allow`). Report wrongly listed domains upstream, not here.
 

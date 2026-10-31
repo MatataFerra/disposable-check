@@ -1,0 +1,82 @@
+# Keeps the built-in blocklist in sync with upstream. Every week (or on demand)
+# it regenerates the list from upstream's latest commit and, when domains were
+# added or removed, opens or updates a single PR on the sync/blocklist branch,
+# carrying a patch changeset. When nothing changed it opens nothing, and it
+# closes a sync PR that no longer differs from main.
+name: Sync blocklist
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: sync-blocklist
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the sync branch
+      pull-requests: write # open, update or close the sync PR
+    env:
+      BRANCH: sync/blocklist
+    steps:
+      # Like the release jobs: no stored credentials and no dependency cache
+      # while third-party code runs in a job that can push.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: pnpm install --frozen-lockfile
+
+      - id: sync
+        run: pnpm sync-blocklist "$RUNNER_TEMP/pr-body.md"
+
+      # PRs opened with GITHUB_TOKEN don't trigger CI, so run its gates here.
+      - name: CI gates
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm build
+          pnpm check:core
+          pnpm check:package
+          pnpm size
+
+      - name: Open or update the sync PR
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ steps.sync.outputs.title }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$BRANCH"
+          git add src/generated/blocklist.ts .changeset/
+          git commit --message "$TITLE"
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --title "$TITLE" --body-file "$RUNNER_TEMP/pr-body.md"
+          else
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$RUNNER_TEMP/pr-body.md"
+          fi
+
+      - name: Close a sync PR that no longer changes anything
+        if: steps.sync.outputs.changed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -n "$pr" ]; then
+            gh pr close "$pr" --delete-branch --comment "Upstream no longer differs from main."
+          fi

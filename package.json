@@ -52,7 +52,8 @@
     "check:package": "publint --strict && attw --pack . --profile esm-only",
     "check:core": "node scripts/check-core-imports.ts",
     "size": "size-limit",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "sync-blocklist": "node scripts/sync-blocklist.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
