@@ -1,5 +1,8 @@
 import { builtInRules } from "./built-in-blocklist.ts";
-import { toCanonicalDomain } from "./canonical-domain.ts";
+import {
+  toCanonicalDomain,
+  toCanonicalEmailDomain,
+} from "./canonical-domain.ts";
 import { findMatchedRule, type MatchedRule, type RuleList } from "./rules.ts";
 
 export type Verdict = "disposable" | "allowed" | "not-listed" | "invalid";
@@ -65,8 +68,7 @@ export function createChecker(options: CheckerOptions = {}): Checker {
   // Order breaks ties between lists on the same rule: allow wins (ADR-0001).
   let lists: readonly RuleList[] | undefined;
 
-  function checkDomain(input: string): CheckResult {
-    const domain = toCanonicalDomain(input);
+  function evaluate(domain: string | null): CheckResult {
     if (domain === null) return invalidResult();
     // Built lazily so creating a checker doesn't parse the built-in blocklist.
     lists ??= [
@@ -83,12 +85,8 @@ export function createChecker(options: CheckerOptions = {}): Checker {
     return { verdict, domain, matchedRule };
   }
 
-  function checkEmail(input: string): CheckResult {
-    const email = input.trim();
-    const at = email.lastIndexOf("@");
-    if (at < 1) return invalidResult();
-    return checkDomain(email.slice(at + 1));
-  }
+  const checkDomain = (input: string) => evaluate(toCanonicalDomain(input));
+  const checkEmail = (input: string) => evaluate(toCanonicalEmailDomain(input));
 
   return Object.freeze({
     checkDomain,

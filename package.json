@@ -8,6 +8,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./dns": {
+      "types": "./dist/dns.d.ts",
+      "default": "./dist/dns.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -20,7 +24,7 @@
   "scripts": {
     "build": "tsdown",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
     "lint": "biome check",
     "generate": "node scripts/generate-blocklist.ts"
   },

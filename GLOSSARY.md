@@ -45,6 +45,13 @@ _Avoid_: blacklist, extra domains
 Un conjunto fijo de rules (built-in blocklist más custom lists) contra el que se evalúan emails y dominios. No cambia después de creado.
 _Avoid_: validator, detector, instance
 
+**MX status**:
+Lo que dicen los registros MX de un dominio sobre si recibe correo: `has-mx`, `no-mx` (no tiene, no existe, o declara un Null MX) o `unknown` (no se pudo averiguar). Es independiente del verdict: un dominio desechable puede tener MX.
+_Avoid_: deliverability, mail check, MX verdict
+
+**Null MX**:
+Un registro MX que declara explícitamente que el dominio no recibe correo (RFC 7505).
+
 **Verdict**:
 El resultado de evaluar un email o dominio: `disposable` (la matched rule viene de una blocklist), `allowed` (viene de la custom allowlist), `not-listed` (ninguna rule coincide) o `invalid` (el input no se puede interpretar como email o dominio).
 _Avoid_: status, result, valid

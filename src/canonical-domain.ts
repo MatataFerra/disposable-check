@@ -34,3 +34,13 @@ export function toCanonicalDomain(input: string): string | null {
   }
   return hostname;
 }
+
+/**
+ * The canonical domain after the last `@` of `email`, or `null` when `email`
+ * has no local part or its domain can't be read as a domain.
+ */
+export function toCanonicalEmailDomain(email: string): string | null {
+  const trimmed = email.trim();
+  const at = trimmed.lastIndexOf("@");
+  return at < 1 ? null : toCanonicalDomain(trimmed.slice(at + 1));
+}
