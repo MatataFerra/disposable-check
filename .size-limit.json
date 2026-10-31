@@ -1,0 +1,9 @@
+[
+  {
+    "name": "core (disposable-check)",
+    "path": "dist/index.js",
+    "import": "*",
+    "limit": "70 kB",
+    "gzip": true
+  }
+]
