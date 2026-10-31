@@ -2,6 +2,28 @@
   "name": "disposable-check",
   "version": "0.0.0",
   "description": "Detect disposable email addresses and domains. Zero dependencies, runs on Node, edge and browsers.",
+  "keywords": [
+    "email",
+    "disposable",
+    "disposable-email",
+    "temporary-email",
+    "throwaway",
+    "burner",
+    "validation",
+    "mailinator",
+    "mx",
+    "edge"
+  ],
+  "homepage": "https://github.com/MatataFerra/disposable-check#readme",
+  "bugs": {
+    "url": "https://github.com/MatataFerra/disposable-check/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MatataFerra/disposable-check.git"
+  },
+  "license": "MIT",
+  "author": "Matias Ferraro",
   "type": "module",
   "exports": {
     ".": {
@@ -29,11 +51,13 @@
     "generate": "node scripts/generate-blocklist.ts",
     "check:package": "publint --strict && attw --pack . --profile esm-only",
     "check:core": "node scripts/check-core-imports.ts",
-    "size": "size-limit"
+    "size": "size-limit",
+    "changeset": "changeset"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@biomejs/biome": "^2.6.4",
+    "@changesets/cli": "^3.0.3",
     "@size-limit/preset-small-lib": "^14.3.0",
     "@types/node": "^24.19.2",
     "publint": "^0.3.25",
