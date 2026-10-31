@@ -7,13 +7,31 @@ export const BUILT_IN_BLOCKLIST_MODULE: URL = new URL(
   import.meta.url,
 );
 
+// The list is about 160 KB; anything far bigger isn't the list.
+const MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
+const TIMEOUT_MS = 30_000;
+
 async function fetchText(
   url: string,
   headers: Record<string, string> = {},
 ): Promise<string> {
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, {
+    headers,
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
   if (!response.ok) throw new Error(`GET ${url} failed: ${response.status}`);
-  return response.text();
+  if (Number(response.headers.get("content-length")) > MAX_RESPONSE_BYTES) {
+    throw new Error(
+      `GET ${url}: response larger than ${MAX_RESPONSE_BYTES} bytes`,
+    );
+  }
+  const body = await response.arrayBuffer();
+  if (body.byteLength > MAX_RESPONSE_BYTES) {
+    throw new Error(
+      `GET ${url}: response larger than ${MAX_RESPONSE_BYTES} bytes`,
+    );
+  }
+  return new TextDecoder().decode(body);
 }
 
 export interface UpstreamBlocklist {
