@@ -92,4 +92,10 @@ describe("checkDomain", () => {
       matchedRule: null,
     });
   });
+
+  it("reports input far longer than any domain as invalid without parsing it", () => {
+    expect(checkDomain(`${" ".repeat(1_000)}mailinator.com`).verdict).toBe(
+      "invalid",
+    );
+  });
 });

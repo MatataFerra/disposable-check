@@ -38,6 +38,20 @@ describe("checkEmail", () => {
   });
 });
 
+describe("checkEmail with long input", () => {
+  it("still evaluates an address with the longest local part", () => {
+    expect(checkEmail(`${"a".repeat(64)}@mailinator.com`).verdict).toBe(
+      "disposable",
+    );
+  });
+
+  it("reports input far longer than any address as invalid without parsing it", () => {
+    expect(checkEmail(`${"a".repeat(1_000)}@mailinator.com`).verdict).toBe(
+      "invalid",
+    );
+  });
+});
+
 describe("isDisposableEmail", () => {
   it("is true for an address on a disposable domain", () => {
     expect(isDisposableEmail("someone@10minutemail.com")).toBe(true);

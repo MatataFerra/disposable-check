@@ -119,6 +119,7 @@ A rule needs at least two labels, so `"com"` is rejected.
 - One trailing dot is dropped (`mailinator.com.`).
 - Internationalized domains are converted to punycode (`münchen.de` becomes `xn--mnchen-3ya.de`). The conversion uses the runtime's built-in `URL`, so very old browsers may differ on unusual inputs.
 - IP addresses, single-label names (`localhost`), URLs, ports, paths, wildcards and labels outside letters, digits and inner hyphens are `invalid`.
+- Input longer than 1,000 characters is `invalid` without being parsed. The longest valid address is 254 characters.
 
 Nothing in the core throws for any input: a value that isn't a string is `invalid`.
 
@@ -144,8 +145,8 @@ await checkMx("x.com", { timeoutMs: 2000 }); // "unknown" if DNS doesn't answer 
 
 Options:
 
-- `timeoutMs` (default `5000`): gives up with `unknown`. A query on the system resolver is also cancelled, so it doesn't keep the process alive.
-- `resolveMx(domain)`: your own lookup, returning `Promise<{ exchange, priority }[]>`. Use it for custom DNS servers, caching, or tests.
+- `timeoutMs` (default `5000`, at most `2147483647`): gives up with `unknown`. A query on the system resolver is also cancelled, so it doesn't keep the process alive.
+- `resolveMx(domain, { signal })`: your own lookup, returning `Promise<{ exchange, priority }[]>`. Use it for custom DNS servers, caching, or tests. `signal` is an `AbortSignal` aborted once `checkMx` stops waiting, so pass it to `fetch` (for example with DNS over HTTPS) to cancel the lookup on timeout.
 
 ## Where to run it
 

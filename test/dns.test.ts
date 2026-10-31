@@ -66,6 +66,32 @@ describe("checkMx", () => {
     );
   });
 
+  it("aborts the signal it gives the resolver when the timeout fires", async () => {
+    let signal: AbortSignal | undefined;
+    const resolveMx = (_: string, options?: { signal: AbortSignal }) => {
+      signal = options?.signal;
+      return new Promise<MxRecord[]>(() => {});
+    };
+
+    await checkMx("example.com", { resolveMx, timeoutMs: 10 });
+
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it("caps a timeout too large for a timer instead of giving up at once", async () => {
+    const resolveMx = () =>
+      new Promise<MxRecord[]>((resolve) =>
+        setTimeout(
+          () => resolve([{ exchange: "mx.example.com", priority: 0 }]),
+          20,
+        ),
+      );
+
+    expect(
+      await checkMx("example.com", { resolveMx, timeoutMs: 2 ** 31 }),
+    ).toBe("has-mx");
+  });
+
   it.each(["", "localhost", "a@", "x@[127.0.0.1]"])(
     "reports unknown without a lookup for the invalid input %j",
     async (input) => {

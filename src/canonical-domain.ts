@@ -7,13 +7,19 @@ const LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
 const MAX_DOMAIN_LENGTH = 253;
 
+// Far above the longest valid address (254 characters, RFC 5321), so only
+// input that can't be one is rejected, before any parsing work.
+const MAX_INPUT_LENGTH = 1000;
+
 /**
  * The canonical domain for `input` (ASCII, lowercase, IDN as punycode, no
  * trailing dot), or `null` when `input` can't be read as a domain.
  */
 export function toCanonicalDomain(input: string): string | null {
   // JavaScript callers can pass anything; that's invalid input, not a bug.
-  if (typeof input !== "string") return null;
+  if (typeof input !== "string" || input.length > MAX_INPUT_LENGTH) {
+    return null;
+  }
   const domain = input.trim().replace(/\.$/, "");
   if (domain === "" || NON_DOMAIN_CHARACTER.test(domain)) return null;
 
@@ -42,7 +48,9 @@ export function toCanonicalDomain(input: string): string | null {
  * has no local part or its domain can't be read as a domain.
  */
 export function toCanonicalEmailDomain(email: string): string | null {
-  if (typeof email !== "string") return null;
+  if (typeof email !== "string" || email.length > MAX_INPUT_LENGTH) {
+    return null;
+  }
   const trimmed = email.trim();
   const at = trimmed.lastIndexOf("@");
   return at < 1 ? null : toCanonicalDomain(trimmed.slice(at + 1));
