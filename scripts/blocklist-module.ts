@@ -1,5 +1,6 @@
 // The format of the generated built-in blocklist module: written here and read
 // back here, so the format lives in one place.
+import { toCanonicalDomain } from "../src/canonical-domain.ts";
 
 export const UPSTREAM_REPO =
   "disposable-email-domains/disposable-email-domains";
@@ -7,12 +8,17 @@ export const UPSTREAM_REPO =
 /**
  * Turns the upstream `disposable_email_blocklist.conf` into the source of the
  * built-in blocklist module. Pure so the output is reproducible for a given SHA.
+ *
+ * Each entry is read like a custom rule: an entry that isn't a domain (a bare
+ * TLD, stray markup) is left out, so upstream data can never become a rule
+ * that blocks a whole TLD.
  */
 export function renderBlocklistModule(upstream: string, sha: string): string {
   const domains = new Set<string>();
   for (const line of upstream.split("\n")) {
-    const domain = line.trim().toLowerCase();
-    if (domain !== "" && !domain.startsWith("#")) domains.add(domain);
+    if (line.trim().startsWith("#")) continue;
+    const domain = toCanonicalDomain(line);
+    if (domain !== null) domains.add(domain);
   }
 
   return [
