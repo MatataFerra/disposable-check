@@ -1,2 +1,14 @@
 node_modules/
 dist/
+
+resume.txt
+
+# Local secrets
+.env
+.env.*
+
+# Local agent tooling and its output
+.agents/
+.claude/
+skills-lock.json
+graphify-out/
