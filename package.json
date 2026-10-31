@@ -1,6 +1,6 @@
 {
   "name": "disposable-check",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Detect disposable email addresses and domains. Zero dependencies, runs on Node, edge and browsers.",
   "keywords": [
     "email",
