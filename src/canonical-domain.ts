@@ -12,6 +12,8 @@ const MAX_DOMAIN_LENGTH = 253;
  * trailing dot), or `null` when `input` can't be read as a domain.
  */
 export function toCanonicalDomain(input: string): string | null {
+  // JavaScript callers can pass anything; that's invalid input, not a bug.
+  if (typeof input !== "string") return null;
   const domain = input.trim().replace(/\.$/, "");
   if (domain === "" || NON_DOMAIN_CHARACTER.test(domain)) return null;
 
@@ -40,6 +42,7 @@ export function toCanonicalDomain(input: string): string | null {
  * has no local part or its domain can't be read as a domain.
  */
 export function toCanonicalEmailDomain(email: string): string | null {
+  if (typeof email !== "string") return null;
   const trimmed = email.trim();
   const at = trimmed.lastIndexOf("@");
   return at < 1 ? null : toCanonicalDomain(trimmed.slice(at + 1));

@@ -32,3 +32,25 @@ describe.each([checkDomain, checkEmail, isDisposableDomain, isDisposableEmail])(
     });
   },
 );
+
+// A JavaScript caller can pass whatever a request body held.
+const NON_STRING_INPUTS = [undefined, null, 42, {}, ["a@b.com"]] as unknown[];
+
+describe.each([checkDomain, checkEmail])("%o with a non-string", (fn) => {
+  it.each(NON_STRING_INPUTS)("reports %j as invalid", (input) => {
+    expect(fn(input as string)).toEqual({
+      verdict: "invalid",
+      domain: null,
+      matchedRule: null,
+    });
+  });
+});
+
+describe.each([isDisposableDomain, isDisposableEmail])(
+  "%o with a non-string",
+  (fn) => {
+    it.each(NON_STRING_INPUTS)("returns false for %j", (input) => {
+      expect(fn(input as string)).toBe(false);
+    });
+  },
+);

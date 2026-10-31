@@ -120,7 +120,7 @@ A rule needs at least two labels, so `"com"` is rejected.
 - Internationalized domains are converted to punycode (`münchen.de` becomes `xn--mnchen-3ya.de`). The conversion uses the runtime's built-in `URL`, so very old browsers may differ on unusual inputs.
 - IP addresses, single-label names (`localhost`), URLs, ports, paths, wildcards and labels outside letters, digits and inner hyphens are `invalid`.
 
-Nothing in the core throws for a string input.
+Nothing in the core throws for any input: a value that isn't a string is `invalid`.
 
 ## MX check (Node only)
 
