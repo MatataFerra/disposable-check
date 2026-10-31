@@ -1,5 +1,11 @@
 # disposable-check
 
+## 0.1.1
+
+### Patch Changes
+
+- 6d1d811: Document where to run checks: on the server, with a server action example.
+
 ## 0.1.0
 
 ### Minor Changes
