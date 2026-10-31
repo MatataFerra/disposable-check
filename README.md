@@ -147,6 +147,26 @@ Options:
 - `timeoutMs` (default `5000`): gives up with `unknown`. A query on the system resolver is also cancelled, so it doesn't keep the process alive.
 - `resolveMx(domain)`: your own lookup, returning `Promise<{ exchange, priority }[]>`. Use it for custom DNS servers, caching, or tests.
 
+## Where to run it
+
+Check addresses on the server: in an API route, a server action or a form handler. A check in the browser is easy to skip, and it adds the built-in blocklist to your client bundle. The core also works in edge functions and middleware. `disposable-check/dns` needs a Node.js runtime.
+
+```ts
+// For example, a Next.js server action
+"use server";
+import { isDisposableEmail } from "disposable-check";
+
+export async function signUp(formData: FormData) {
+  const email = String(formData.get("email") ?? "");
+  if (isDisposableEmail(email)) {
+    return { error: "Please use a permanent email address." };
+  }
+  // ...
+}
+```
+
+If you use `createChecker`, create the checker once at module level and reuse it.
+
 ## Bundle size and runtimes
 
 The core is about 58 KB minified and gzipped, nearly all of it the built-in blocklist, which is parsed on first use. It uses only standard JavaScript and `URL`. CI checks that the core never imports a Node built-in and that it stays under 70 KB.
