@@ -6,7 +6,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!src/generated", "!.changeset", "!CHANGELOG.md"]
+    "includes": [
+      "**",
+      "!src/generated",
+      "!.changeset",
+      "!CHANGELOG.md",
+      "!.agents",
+      "!.claude"
+    ]
   },
   "formatter": {
     "indentStyle": "space"

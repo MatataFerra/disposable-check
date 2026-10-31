@@ -1,5 +1,5 @@
 {
-  // Node-only code: the /dns entry, its tests and the build scripts.
+  // Node-only code: the /dns entry, its tests, the build scripts and tool config.
   // Kept apart so Node types never leak into the runtime-agnostic core.
   "extends": "./tsconfig.json",
   "compilerOptions": {
@@ -7,6 +7,6 @@
     "module": "nodenext",
     "moduleResolution": "nodenext"
   },
-  "include": ["src/dns.ts", "test/dns.test.ts", "scripts"],
+  "include": ["src/dns.ts", "test/dns.test.ts", "scripts", "vitest.config.ts"],
   "exclude": []
 }
